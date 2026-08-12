@@ -1,7 +1,7 @@
 package com.github.getchoo.smoothboot.config;
 
 import com.github.getchoo.smoothboot.SmoothBoot;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 public class SmoothBootConfig {
 	public ThreadCount threadCount = new ThreadCount();
@@ -10,7 +10,7 @@ public class SmoothBootConfig {
 	
 	public static class ThreadCount {
 		public int bootstrap = 1;
-		public int main = MathHelper.clamp(Runtime.getRuntime().availableProcessors() - 1, 1,
+		public int main = Mth.clamp(Runtime.getRuntime().availableProcessors() - 1, 1,
 				SmoothBoot.getMaxBackgroundThreads());
 	}
 	
@@ -26,11 +26,11 @@ public class SmoothBootConfig {
 		threadCount.bootstrap = Math.max(threadCount.bootstrap, 1);
 		threadCount.main = Math.max(threadCount.main, 1);
 
-		threadPriority.game = MathHelper.clamp(threadPriority.game, 1, 10);
-		threadPriority.integratedServer = MathHelper.clamp(threadPriority.integratedServer, 1, 10);
-		threadPriority.bootstrap = MathHelper.clamp(threadPriority.bootstrap, 1, 10);
-		threadPriority.main = MathHelper.clamp(threadPriority.main, 1, 10);
-		threadPriority.io = MathHelper.clamp(threadPriority.io, 1, 10);
+		threadPriority.game = Mth.clamp(threadPriority.game, 1, 10);
+		threadPriority.integratedServer = Mth.clamp(threadPriority.integratedServer, 1, 10);
+		threadPriority.bootstrap = Mth.clamp(threadPriority.bootstrap, 1, 10);
+		threadPriority.main = Mth.clamp(threadPriority.main, 1, 10);
+		threadPriority.io = Mth.clamp(threadPriority.io, 1, 10);
 	}
 }
  

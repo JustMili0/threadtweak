@@ -2,20 +2,16 @@ package com.github.getchoo.smoothboot.mixin;
 
 import com.github.getchoo.smoothboot.SmoothBoot;
 import com.github.getchoo.smoothboot.util.LoggingForkJoinWorkerThread;
+import net.minecraft.TracingExecutor;
+import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.thread.NameableExecutor;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Mixin(Util.class)
@@ -24,13 +20,13 @@ public abstract class UtilMixin {
 	private static ExecutorService BOOTSTRAP_EXECUTOR;*/
 	
 	@Shadow @Final @Mutable
-	private static NameableExecutor MAIN_WORKER_EXECUTOR;
+	private static TracingExecutor BACKGROUND_EXECUTOR;
 	
 	@Shadow @Final @Mutable
-	private static NameableExecutor IO_WORKER_EXECUTOR;
+	private static TracingExecutor IO_POOL;
 
 	@Shadow
-	private static void uncaughtExceptionHandler(Thread thread, Throwable throwable) {}
+	private static void onThreadException(Thread thread, Throwable throwable) {}
 
 	/*@Inject(method = "getBootstrapExecutor", at = @At("HEAD"))
 	private static void onGetBootstrapExecutor(CallbackInfoReturnable<Executor> ci) {
@@ -41,19 +37,19 @@ public abstract class UtilMixin {
 		}
 	}*/ //FIXME 1.19.4
 
-	@Inject(method = "getMainWorkerExecutor", at = @At("HEAD"))
+	@Inject(method = "backgroundExecutor", at = @At("HEAD"))
 	private static void onGetMainWorkerExecutor(CallbackInfoReturnable<Executor> ci) {
 		if (!SmoothBoot.initMainWorker) {
-			MAIN_WORKER_EXECUTOR = replWorker("Main");
+			BACKGROUND_EXECUTOR = replWorker("Main");
 			SmoothBoot.LOGGER.debug("Main worker replaced");
 			SmoothBoot.initMainWorker = true;
 		}
 	}
 
-	@Inject(method = "getIoWorkerExecutor", at = @At("HEAD"))
+	@Inject(method = "ioPool", at = @At("HEAD"))
 	private static void onGetIoWorkerExecutor(CallbackInfoReturnable<Executor> ci) {
 		if (!SmoothBoot.initIOWorker) {
-			IO_WORKER_EXECUTOR = replIoWorker();
+			IO_POOL = replIoWorker();
 			SmoothBoot.LOGGER.debug("IO worker replaced");
 			SmoothBoot.initIOWorker = true;
 		}
@@ -63,7 +59,7 @@ public abstract class UtilMixin {
 	 * Replace
 	 */
 	@Unique
-	private static NameableExecutor replWorker(String name) {
+	private static TracingExecutor replWorker(String name) {
 		if (!SmoothBoot.initConfig) {
 			SmoothBoot.regConfig();
 			SmoothBoot.initConfig = true;
@@ -71,7 +67,7 @@ public abstract class UtilMixin {
 
 		AtomicInteger atomicInteger = new AtomicInteger(1);
 
-		ExecutorService service = new ForkJoinPool(MathHelper.clamp(select(name, SmoothBoot.config.threadCount.bootstrap,
+		ExecutorService service = new ForkJoinPool(Mth.clamp(select(name, SmoothBoot.config.threadCount.bootstrap,
 			SmoothBoot.config.threadCount.main), 1, 0x7fff), forkJoinPool -> {
 				String workerName = "Worker-" + name + "-" + atomicInteger.getAndIncrement();
                 SmoothBoot.LOGGER.debug("Initialized {}", workerName);
@@ -81,16 +77,16 @@ public abstract class UtilMixin {
 					SmoothBoot.config.threadPriority.main));
 				forkJoinWorkerThread.setName(workerName);
 				return forkJoinWorkerThread;
-		}, UtilMixin::uncaughtExceptionHandler, true);
+		}, UtilMixin::onThreadException, true);
 
-		return new NameableExecutor(service);
+		return new TracingExecutor(service);
 	}
 
 	/**
 	 * Replace
 	 */
 	@Unique
-	private static NameableExecutor replIoWorker() {
+	private static TracingExecutor replIoWorker() {
 		AtomicInteger atomicInteger = new AtomicInteger(1);
 
 		ExecutorService service = Executors.newCachedThreadPool(runnable -> {
@@ -101,11 +97,11 @@ public abstract class UtilMixin {
 			thread.setName(workerName);
 			thread.setDaemon(true);
 			thread.setPriority(SmoothBoot.config.threadPriority.io);
-			thread.setUncaughtExceptionHandler(UtilMixin::uncaughtExceptionHandler);
+			thread.setUncaughtExceptionHandler(UtilMixin::onThreadException);
 			return thread;
 		});
 
-		return new NameableExecutor(service);
+		return new TracingExecutor(service);
 	}
 	
 	@Unique

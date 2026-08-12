@@ -1,9 +1,9 @@
 package com.github.getchoo.smoothboot.config;
 
+import com.github.getchoo.smoothboot.SmoothBoot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import com.github.getchoo.smoothboot.SmoothBoot;
 import net.minecraft.util.Util;
 
 import java.io.File;
@@ -47,6 +47,6 @@ public class ConfigHandler {
     public static void openConfigFile() {
         String configPath = System.getProperty("user.dir") + "/config/" + SmoothBoot.MOD_ID + ".json";
 
-        Util.getOperatingSystem().open(new File(configPath));
+        Util.getPlatform().openFile(new File(configPath));
     }
 }

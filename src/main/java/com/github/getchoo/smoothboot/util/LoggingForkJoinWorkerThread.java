@@ -1,9 +1,9 @@
 package com.github.getchoo.smoothboot.util;
 
+import org.apache.logging.log4j.Logger;
+
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
-
-import org.apache.logging.log4j.Logger;
 
 public class LoggingForkJoinWorkerThread extends ForkJoinWorkerThread {
 	private final Logger logger;

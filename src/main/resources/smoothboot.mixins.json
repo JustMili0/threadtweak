@@ -3,9 +3,16 @@
   "minVersion": "0.8",
   "package": "com.github.getchoo.smoothboot.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": ["UtilMixin"],
-  "client": ["client.MainMixin", "client.IntegratedServerMixin"],
-  "server": ["server.MainMixin"],
+  "mixins": [
+    "UtilMixin"
+  ],
+  "client": [
+    "client.IntegratedServerMixin",
+    "client.MainMixin"
+  ],
+  "server": [
+    "server.MainMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
