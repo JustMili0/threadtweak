@@ -12,7 +12,7 @@ public class SmoothBootModMenu implements ModMenuApi {
             @Override
             protected void init() {
                 ConfigHandler.openConfigFile();
-                this.minecraft.setScreen(screen);
+                this.minecraft.setScreenAndShow(screen);
             }
         };
     }
